@@ -67,7 +67,7 @@ export async function PATCH(
 
   const { data, error } = await supabaseAdmin
     .from("requests")
-    .update(updates)
+    .update(updates as never)
     .eq("id", id)
     .select()
     .single();
