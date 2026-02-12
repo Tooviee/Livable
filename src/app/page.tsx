@@ -16,10 +16,10 @@ export default function HomePage() {
               Request help
             </Link>
             <Link
-              href="/admin"
-              className="text-stone-500 hover:text-stone-300 transition-colors text-sm"
+              href="/about"
+              className="text-stone-400 hover:text-emerald-400 transition-colors"
             >
-              Admin
+              About
             </Link>
           </nav>
         </div>

@@ -66,12 +66,14 @@ export default function RequestPage() {
           <Link href="/" className="text-xl font-semibold tracking-tight text-stone-100">
             Livable
           </Link>
-          <Link
-            href="/"
-            className="text-stone-400 hover:text-stone-200 transition-colors text-sm"
-          >
-            ← Back
-          </Link>
+          <nav className="flex gap-4 items-center">
+            <Link href="/about" className="text-stone-400 hover:text-stone-200 text-sm">
+              About
+            </Link>
+            <Link href="/" className="text-stone-400 hover:text-stone-200 text-sm">
+              ← Back
+            </Link>
+          </nav>
         </div>
       </header>
 
@@ -84,8 +86,11 @@ export default function RequestPage() {
         </p>
 
         {status === "success" && (
-          <div className="mb-6 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
-            Request submitted. Check your email for confirmation and next steps.
+          <div className="mb-6 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 space-y-2">
+            <p>Request submitted. Check your email for confirmation and next steps.</p>
+            <p className="text-sm text-emerald-200/90">
+              If you don’t see it, check your spam or junk folder — our confirmation emails sometimes land there.
+            </p>
           </div>
         )}
 
