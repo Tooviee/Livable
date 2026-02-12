@@ -15,10 +15,22 @@ const CATEGORIES = [
 
 const LANGUAGES = [
   { value: "en", label: "English" },
-  { value: "ko", label: "한국어" },
+  { value: "es", label: "Español" },
+  { value: "fr", label: "Français" },
+  { value: "pt", label: "Português" },
+  { value: "de", label: "Deutsch" },
+  { value: "it", label: "Italiano" },
+  { value: "id", label: "Bahasa Indonesia" },
+  { value: "ru", label: "Русский язык" },
+  { value: "mn", label: "Монгол хэл" },
   { value: "zh", label: "中文" },
   { value: "ja", label: "日本語" },
+  { value: "hi", label: "हिन्दी" },
   { value: "vi", label: "Tiếng Việt" },
+  { value: "tl", label: "Tagalog" },
+  { value: "th", label: "ภาษาไทย" },
+  { value: "ar", label: "اللغة العربية" },
+  { value: "ko", label: "한국어" },
   { value: "other", label: "Other" },
 ];
 
