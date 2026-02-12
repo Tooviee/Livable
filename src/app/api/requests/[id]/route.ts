@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { isValidUuid } from "@/lib/validation";
+import { LIMITS } from "@/lib/validation";
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
 
 function checkAuth(request: NextRequest): boolean {
-  const secret =
-    request.headers.get("x-admin-secret") ?? request.nextUrl.searchParams.get("secret");
-  return !!ADMIN_SECRET && secret === ADMIN_SECRET;
+  const secret = request.headers.get("x-admin-secret");
+  return !!ADMIN_SECRET && !!secret && secret === ADMIN_SECRET;
 }
 
 export async function GET(
@@ -24,6 +25,9 @@ export async function GET(
   }
 
   const { id } = await params;
+  if (!isValidUuid(id)) {
+    return NextResponse.json({ error: "Invalid request ID." }, { status: 400 });
+  }
   const { data, error } = await supabaseAdmin
     .from("requests")
     .select("*")
@@ -51,13 +55,17 @@ export async function PATCH(
   }
 
   const { id } = await params;
+  if (!isValidUuid(id)) {
+    return NextResponse.json({ error: "Invalid request ID." }, { status: 400 });
+  }
   const body = await request.json().catch(() => ({}));
   const updates: { status?: string; internal_notes?: string | null; updated_at?: string } = {};
   if (["new", "in_progress", "resolved", "closed"].includes(body.status)) {
     updates.status = body.status;
   }
   if (typeof body.internal_notes === "string") {
-    updates.internal_notes = body.internal_notes || null;
+    const notes = body.internal_notes.trim();
+    updates.internal_notes = notes.length > LIMITS.internal_notes ? notes.slice(0, LIMITS.internal_notes) : (notes || null);
   }
   updates.updated_at = new Date().toISOString();
 

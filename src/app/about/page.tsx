@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
-// Edit these to match your details. Add your photo as public/me.jpg (square works best).
+// Edit these to match your details. Add your photo as public/me.jpg or public/me.png (square works best).
 const ABOUT = {
   name: "Jung Ko",
   statement:
@@ -48,7 +48,7 @@ export default function AboutPage() {
             <div className="w-32 h-32 rounded-full overflow-hidden bg-stone-800 ring-2 ring-stone-700 flex items-center justify-center">
               {!photoError ? (
                 <img
-                  src="/me.jpg"
+                  src="/me.png"
                   alt={ABOUT.name}
                   className="w-full h-full object-cover"
                   onError={() => setPhotoError(true)}

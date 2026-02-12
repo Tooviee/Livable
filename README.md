@@ -7,7 +7,20 @@ A small help portal for foreigners living in Korea. Users submit requests; you m
 - **Landing page** (`/`) ? intro and link to the request form
 - **Request form** (`/request`) ? name, email, phone, language, category, message
 - **Submit API** — saves to Supabase and sends a confirmation email (via Brevo or Outlook)
-- **Admin** (`/admin`) ? list of requests (protected by `ADMIN_SECRET`)
+- **Admin** (`/admin`) — list of requests (protected by `ADMIN_SECRET`)
+
+## Security and data protection
+
+The app is built to keep user data safe and to avoid common abuse:
+
+- **Admin access** — Admin APIs accept only the `x-admin-secret` header (never the URL). The secret is not linked anywhere on the public site.
+- **Input validation** — All submitted fields have maximum lengths; email format is validated. Request body size is capped (~50KB).
+- **Rate limiting** — Submit endpoint is limited to 5 requests per IP per 15 minutes to reduce spam and abuse.
+- **Security headers** — Responses send `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and similar headers to reduce clickjacking and sniffing.
+- **Database** — Supabase RLS is enabled; the app uses the service role only on the server for admin and for validated form submissions. No secrets or service keys are exposed to the browser.
+- **Errors** — In production, API error messages do not expose internal details (e.g. DB errors are logged server-side only).
+
+User data (name, email, phone, message) is only used to respond to the request and is not shared with third parties or used for marketing (as stated on the About page).
 
 ## Setup
 

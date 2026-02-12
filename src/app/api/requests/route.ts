@@ -4,8 +4,8 @@ import { supabaseAdmin } from "@/lib/supabase";
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
 
 export async function GET(request: NextRequest) {
-  const secret = request.headers.get("x-admin-secret") ?? request.nextUrl.searchParams.get("secret");
-  if (!ADMIN_SECRET || secret !== ADMIN_SECRET) {
+  const secret = request.headers.get("x-admin-secret");
+  if (!ADMIN_SECRET || !secret || secret !== ADMIN_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   if (!supabaseAdmin) {
