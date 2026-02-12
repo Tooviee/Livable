@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase, supabaseAdmin } from "@/lib/supabase";
 import { sendConfirmationEmail } from "@/lib/email";
+import { notifyDiscordNewRequest } from "@/lib/discord";
 import type { Database } from "@/types/database";
 
 type RequestInsert = Database["public"]["Tables"]["requests"]["Insert"];
@@ -65,6 +66,15 @@ export async function POST(request: NextRequest) {
     requestId,
     requestDate,
   });
+
+  notifyDiscordNewRequest({
+    name: parsed.name,
+    email: parsed.email,
+    phone: parsed.phone,
+    category: parsed.category,
+    message: parsed.message,
+    requestId,
+  }).catch(() => {});
 
   return NextResponse.json({ id: requestId, ok: true });
 }

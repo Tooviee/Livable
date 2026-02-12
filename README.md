@@ -41,6 +41,8 @@ Emails are sent via Brevo’s API; your Outlook is only used as the verified “
 
 Copy `.env.example` to `.env.local` and fill in Supabase keys, Brevo (or Outlook), and `ADMIN_SECRET`.
 
+**Optional — Discord:** To get a notification in a Discord channel when someone submits a request, create a webhook (Server Settings → Integrations → Webhooks → New Webhook), copy the URL, and set `DISCORD_WEBHOOK_URL` in `.env.local`. The message includes name, email, phone (if provided), category, and description.
+
 ### 5. Run locally
 
 ```bash
@@ -102,6 +104,7 @@ If you haven’t already:
    | `FROM_NAME` | Livable |
    | `REPLY_TO_EMAIL` | same as FROM_EMAIL or your reply address |
    | `ADMIN_SECRET` | your secret for /admin |
+   | `DISCORD_WEBHOOK_URL` | (optional) Discord webhook for new-request notifications |
 
 5. Click **Save**, then go to **Deployments** → open the **⋯** on the latest deployment → **Redeploy** so the new env vars are used.
 
