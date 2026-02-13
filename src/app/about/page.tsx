@@ -69,8 +69,8 @@ export default function AboutPage() {
         </p>
       </main>
 
-      <div className="w-full px-4 mt-10">
-        <div className="max-w-3xl ml-auto text-right text-stone-400 text-sm">
+      <div className="px-4 mt-10">
+        <div className="max-w-3xl mx-auto flex justify-end text-stone-400 text-sm">
           Contact us:{" "}
           <a
             href={`mailto:${ABOUT.contactEmail}`}
