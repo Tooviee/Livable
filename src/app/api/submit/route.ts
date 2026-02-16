@@ -118,7 +118,9 @@ export async function POST(request: NextRequest) {
     category: data.category,
     message: data.message,
     requestId,
-  }).catch(() => {});
+  }).catch((err) => {
+    console.error("[Discord] Notification failed:", err);
+  });
 
   return NextResponse.json({ id: requestId, ok: true });
 }

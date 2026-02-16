@@ -69,20 +69,21 @@ export default function AboutPage() {
         </p>
       </main>
 
-      <div className="px-4 mt-10">
-        <div className="max-w-3xl mx-auto flex justify-end text-stone-400 text-sm">
-          Contact us:{" "}
-          <a
-            href={`mailto:${ABOUT.contactEmail}`}
-            className="text-emerald-400 hover:text-emerald-300 transition-colors"
-          >
-            {ABOUT.contactEmail}
-          </a>
-        </div>
-      </div>
-      <footer className="border-t border-stone-800 py-6 mt-4 px-4">
-        <div className="max-w-3xl mx-auto flex justify-end text-stone-500 text-sm">
-          <span>Livable — Helping you settle in.</span>
+      <footer className="border-t border-stone-800 py-6 mt-12 px-4">
+        <div className="max-w-3xl mx-auto grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
+          <div />
+          <span className="text-center text-stone-500 text-sm">
+            Livable — Helping you settle in.
+          </span>
+          <div className="text-right text-stone-400 text-sm">
+            Contact us:{" "}
+            <a
+              href={`mailto:${ABOUT.contactEmail}`}
+              className="text-emerald-400 hover:text-emerald-300 transition-colors"
+            >
+              {ABOUT.contactEmail}
+            </a>
+          </div>
         </div>
       </footer>
     </div>

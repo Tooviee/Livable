@@ -32,15 +32,11 @@ export async function notifyDiscordNewRequest(payload: NewRequestPayload): Promi
   const raw = process.env.DISCORD_WEBHOOK_URL;
   const url = raw?.trim();
   if (!url) {
-    if (process.env.NODE_ENV === "development") {
-      console.log("[Discord] DISCORD_WEBHOOK_URL not set — skipping webhook");
-    }
+    console.warn("[Discord] DISCORD_WEBHOOK_URL not set — skipping webhook");
     return;
   }
   if (!is_valid_webhook_url(url)) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[Discord] DISCORD_WEBHOOK_URL should start with https://discord.com/api/webhooks/ or https://discordapp.com/api/webhooks/ — skipping");
-    }
+    console.warn("[Discord] DISCORD_WEBHOOK_URL invalid (must start with https://discord.com/api/webhooks/ or https://discordapp.com/api/webhooks/) — skipping");
     return;
   }
 
