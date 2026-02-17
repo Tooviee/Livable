@@ -64,9 +64,9 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b border-stone-800">
+      <header className="border-b border-stone-200 dark:border-stone-800">
         <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
-          <Link href="/" className="text-xl font-semibold tracking-tight text-stone-100">
+          <Link href="/" className="text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">
             Livable
           </Link>
           <span className="text-stone-500 text-sm">Admin</span>
@@ -74,11 +74,11 @@ export default function AdminPage() {
       </header>
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8">
-        <h1 className="text-2xl font-semibold text-stone-100 mb-6">Requests</h1>
+        <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100 mb-6">Requests</h1>
 
         {!secret ? (
           <form onSubmit={handleLoad} className="space-y-4 max-w-sm">
-            <label className="block text-sm text-stone-400">
+            <label className="block text-sm text-stone-600 dark:text-stone-400">
               Admin secret (set in env as ADMIN_SECRET)
             </label>
             <div className="flex gap-2">
@@ -88,11 +88,11 @@ export default function AdminPage() {
                 placeholder="Enter secret"
                 value={secretInput}
                 onChange={(e) => setSecretInput(e.target.value)}
-                className="flex-1 rounded-lg border border-stone-700 bg-stone-900 px-4 py-2 text-stone-100 placeholder-stone-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                className="flex-1 rounded-lg border border-stone-300 bg-white dark:border-stone-700 dark:bg-stone-900 px-4 py-2 text-stone-900 dark:text-stone-100 placeholder-stone-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
               <button
                 type="submit"
-                className="rounded-lg bg-stone-700 hover:bg-stone-600 px-4 py-2 text-stone-200 font-medium"
+                className="rounded-lg bg-stone-200 hover:bg-stone-300 dark:bg-stone-700 dark:hover:bg-stone-600 px-4 py-2 text-stone-800 dark:text-stone-200 font-medium"
               >
                 Load
               </button>
@@ -101,7 +101,7 @@ export default function AdminPage() {
         ) : (
           <>
             {error && (
-              <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
+              <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 dark:bg-red-500/10 dark:border-red-500/30 text-red-700 dark:text-red-300 text-sm">
                 {error}
               </div>
             )}
@@ -115,10 +115,10 @@ export default function AdminPage() {
                   <Link
                     key={r.id}
                     href={`/admin/${r.id}`}
-                    className="block rounded-xl border border-stone-800 bg-stone-900/50 p-4 hover:border-stone-600 transition-colors"
+                    className="block rounded-xl border border-stone-200 bg-stone-50 dark:border-stone-800 dark:bg-stone-900/50 p-4 hover:border-stone-400 dark:hover:border-stone-600 transition-colors"
                   >
                     <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <span className="text-stone-400 text-sm font-mono">
+                      <span className="text-stone-500 dark:text-stone-400 text-sm font-mono">
                         {r.id.slice(0, 8)}
                       </span>
                       <span className="text-stone-500 text-sm">
@@ -127,21 +127,21 @@ export default function AdminPage() {
                       <span
                         className={`text-xs px-2 py-0.5 rounded ${
                           r.status === "new"
-                            ? "bg-amber-500/20 text-amber-400"
+                            ? "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-400"
                             : r.status === "resolved" || r.status === "closed"
-                              ? "bg-emerald-500/20 text-emerald-400"
-                              : "bg-stone-600 text-stone-300"
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-400"
+                              : "bg-stone-200 text-stone-700 dark:bg-stone-600 dark:text-stone-300"
                         }`}
                       >
                         {STATUS_LABELS[r.status] ?? r.status}
                       </span>
                     </div>
-                    <p className="font-medium text-stone-200">{r.name}</p>
+                    <p className="font-medium text-stone-800 dark:text-stone-200">{r.name}</p>
                     <p className="text-stone-500 text-sm">{r.email}</p>
-                    <p className="text-stone-400 text-sm mt-1">
+                    <p className="text-stone-600 dark:text-stone-400 text-sm mt-1">
                       {r.category} · {r.language}
                     </p>
-                    <p className="text-stone-300 text-sm mt-2 line-clamp-2">
+                    <p className="text-stone-600 dark:text-stone-300 text-sm mt-2 line-clamp-2">
                       {r.message}
                     </p>
                   </Link>

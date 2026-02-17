@@ -95,9 +95,9 @@ export default function AdminRequestDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
-        <header className="border-b border-stone-800">
+        <header className="border-b border-stone-200 dark:border-stone-800">
           <div className="max-w-3xl mx-auto px-4 py-6">
-            <Link href="/admin" className="text-stone-400 hover:text-stone-200 text-sm">
+            <Link href="/admin" className="text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200 text-sm">
               ← Back to requests
             </Link>
           </div>
@@ -112,15 +112,15 @@ export default function AdminRequestDetailPage() {
   if (error && !request) {
     return (
       <div className="min-h-screen flex flex-col">
-        <header className="border-b border-stone-800">
+        <header className="border-b border-stone-200 dark:border-stone-800">
           <div className="max-w-3xl mx-auto px-4 py-6">
-            <Link href="/admin" className="text-stone-400 hover:text-stone-200 text-sm">
+            <Link href="/admin" className="text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200 text-sm">
               ← Back to requests
             </Link>
           </div>
         </header>
         <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-8">
-          <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300">
+          <div className="p-4 rounded-lg bg-red-50 border border-red-200 dark:bg-red-500/10 dark:border-red-500/30 text-red-700 dark:text-red-300">
             {error}
           </div>
         </main>
@@ -132,9 +132,9 @@ export default function AdminRequestDetailPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b border-stone-800">
+      <header className="border-b border-stone-200 dark:border-stone-800">
         <div className="max-w-3xl mx-auto px-4 py-6 flex items-center justify-between">
-          <Link href="/admin" className="text-stone-400 hover:text-stone-200 text-sm">
+          <Link href="/admin" className="text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200 text-sm">
             ← Back to requests
           </Link>
           <span className="text-stone-500 text-sm font-mono">{request.id.slice(0, 8)}…</span>
@@ -142,31 +142,31 @@ export default function AdminRequestDetailPage() {
       </header>
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-8">
-        <h1 className="text-2xl font-semibold text-stone-100 mb-6">Request details</h1>
+        <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100 mb-6">Request details</h1>
 
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
+          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 dark:bg-red-500/10 dark:border-red-500/30 text-red-700 dark:text-red-300 text-sm">
             {error}
           </div>
         )}
         {saved && (
-          <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm">
+          <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-sm">
             Saved.
           </div>
         )}
 
-        <div className="rounded-xl border border-stone-800 bg-stone-900/50 p-6 mb-8 space-y-4">
+        <div className="rounded-xl border border-stone-200 bg-stone-50 dark:border-stone-800 dark:bg-stone-900/50 p-6 mb-8 space-y-4">
           <p className="text-stone-500 text-sm">
             Submitted {new Date(request.created_at).toLocaleString()}
           </p>
           <div>
             <span className="text-stone-500 text-sm">Name</span>
-            <p className="text-stone-100 font-medium">{request.name}</p>
+            <p className="text-stone-900 dark:text-stone-100 font-medium">{request.name}</p>
           </div>
           <div>
             <span className="text-stone-500 text-sm">Email</span>
-            <p className="text-stone-100">
-              <a href={`mailto:${request.email}`} className="text-emerald-400 hover:underline">
+            <p className="text-stone-900 dark:text-stone-100">
+              <a href={`mailto:${request.email}`} className="text-emerald-600 hover:underline dark:text-emerald-400">
                 {request.email}
               </a>
             </p>
@@ -174,34 +174,34 @@ export default function AdminRequestDetailPage() {
           {request.phone && (
             <div>
               <span className="text-stone-500 text-sm">Phone</span>
-              <p className="text-stone-100">{request.phone}</p>
+              <p className="text-stone-900 dark:text-stone-100">{request.phone}</p>
             </div>
           )}
           <div>
             <span className="text-stone-500 text-sm">Language</span>
-            <p className="text-stone-100">{request.language}</p>
+            <p className="text-stone-900 dark:text-stone-100">{request.language}</p>
           </div>
           <div>
             <span className="text-stone-500 text-sm">Category</span>
-            <p className="text-stone-100">{request.category}</p>
+            <p className="text-stone-900 dark:text-stone-100">{request.category}</p>
           </div>
           <div>
             <span className="text-stone-500 text-sm">Message</span>
-            <p className="text-stone-100 mt-1 whitespace-pre-wrap">{request.message}</p>
+            <p className="text-stone-900 dark:text-stone-100 mt-1 whitespace-pre-wrap">{request.message}</p>
           </div>
         </div>
 
         <form onSubmit={handleSave} className="space-y-4">
-          <h2 className="text-lg font-medium text-stone-200">Update request</h2>
+          <h2 className="text-lg font-medium text-stone-800 dark:text-stone-200">Update request</h2>
           <div>
-            <label htmlFor="status" className="block text-sm text-stone-400 mb-1">
+            <label htmlFor="status" className="block text-sm text-stone-600 dark:text-stone-400 mb-1">
               Status
             </label>
             <select
               id="status"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full max-w-xs rounded-lg border border-stone-700 bg-stone-900 px-4 py-2 text-stone-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              className="w-full max-w-xs rounded-lg border border-stone-300 bg-white dark:border-stone-700 dark:bg-stone-900 px-4 py-2 text-stone-900 dark:text-stone-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             >
               {STATUS_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -211,7 +211,7 @@ export default function AdminRequestDetailPage() {
             </select>
           </div>
           <div>
-            <label htmlFor="notes" className="block text-sm text-stone-400 mb-1">
+            <label htmlFor="notes" className="block text-sm text-stone-600 dark:text-stone-400 mb-1">
               Internal notes (only you see these)
             </label>
             <textarea
@@ -219,14 +219,14 @@ export default function AdminRequestDetailPage() {
               value={internalNotes}
               onChange={(e) => setInternalNotes(e.target.value)}
               rows={4}
-              className="w-full rounded-lg border border-stone-700 bg-stone-900 px-4 py-2 text-stone-100 placeholder-stone-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-y"
+              className="w-full rounded-lg border border-stone-300 bg-white dark:border-stone-700 dark:bg-stone-900 px-4 py-2 text-stone-900 dark:text-stone-100 placeholder-stone-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-y"
               placeholder="Notes for yourself on how you’re handling this request…"
             />
           </div>
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-stone-950 font-medium px-4 py-2"
+            className="rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white font-medium px-4 py-2"
           >
             {saving ? "Saving…" : "Save"}
           </button>

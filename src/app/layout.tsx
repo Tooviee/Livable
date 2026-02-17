@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={outfit.variable}>
-      <body className="font-sans antialiased min-h-screen bg-stone-950 text-stone-100">
+      <body className="font-sans antialiased min-h-screen bg-white text-stone-900 dark:bg-stone-950 dark:text-stone-100">
         {children}
       </body>
     </html>
