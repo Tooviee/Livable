@@ -1,6 +1,7 @@
 /**
  * Send a Discord webhook notification when a new request is submitted.
  */
+import { getAppointmentSlotLabel } from "@/lib/appointment-slots";
 
 export type NewRequestPayload = {
   name: string;
@@ -9,6 +10,12 @@ export type NewRequestPayload = {
   category: string;
   message: string;
   requestId: string;
+  wantsAppointment?: boolean;
+  appointmentPreference?: string;
+  appointmentDate?: string;
+  appointmentTimeSlot?: string;
+  preferredContact?: "zoom" | "email" | "instagram";
+  instagramHandle?: string;
 };
 
 const MAX_FIELD_VALUE = 1024;
@@ -61,6 +68,27 @@ export async function notifyDiscordNewRequest(payload: NewRequestPayload): Promi
     value: payload.requestId.slice(0, 8) + "…",
     inline: false,
   });
+
+  const contact = payload.preferredContact ?? (payload.wantsAppointment ? "zoom" : "email");
+  if (contact === "zoom" && payload.wantsAppointment) {
+    const parts: string[] = ["Zoom"];
+    if (payload.appointmentDate && payload.appointmentTimeSlot) {
+      const d = new Date(payload.appointmentDate + "T12:00:00Z");
+      const dateStr = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+      parts.push(`**${dateStr}**, ${getAppointmentSlotLabel(payload.appointmentTimeSlot)}`);
+    }
+    if (payload.appointmentPreference) parts.push(`Note: ${payload.appointmentPreference}`);
+    fields.push({
+      name: "Follow-up",
+      value: truncate(parts.join(" · "), MAX_FIELD_VALUE),
+      inline: false,
+    });
+  } else if (contact === "email") {
+    fields.push({ name: "Follow-up", value: "Email", inline: false });
+  } else if (contact === "instagram") {
+    const val = payload.instagramHandle ? `Instagram (@${payload.instagramHandle.replace(/^@/, "")})` : "Instagram DM";
+    fields.push({ name: "Follow-up", value: truncate(val, MAX_FIELD_VALUE), inline: false });
+  }
 
   try {
     if (process.env.NODE_ENV === "development") {

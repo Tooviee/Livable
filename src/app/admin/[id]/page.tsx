@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import type { RequestRow } from "@/types/database";
+import { getAppointmentSlotLabel } from "@/lib/appointment-slots";
 
 const STATUS_OPTIONS = [
   { value: "new", label: "New" },
@@ -27,8 +28,12 @@ export default function AdminRequestDetailPage() {
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [internalNotes, setInternalNotes] = useState("");
+  const [zoomLink, setZoomLink] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [creatingZoomMeeting, setCreatingZoomMeeting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (!id) return;
@@ -51,6 +56,7 @@ export default function AdminRequestDetailPage() {
         setRequest(data);
         setStatus(data.status);
         setInternalNotes(data.internal_notes ?? "");
+        setZoomLink(data.zoom_link ?? "");
         setError("");
       })
       .catch((e) => {
@@ -59,6 +65,53 @@ export default function AdminRequestDetailPage() {
       .finally(() => setLoading(false));
     return () => controller.abort();
   }, [id]);
+
+  const handleCreateZoomMeeting = async () => {
+    if (!request?.id) return;
+    const secret = getStoredSecret();
+    if (!secret) return;
+    setCreatingZoomMeeting(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/requests/${request.id}/create-zoom-meeting`, {
+        method: "POST",
+        headers: { "x-admin-secret": secret },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to create Zoom meeting.");
+      setZoomLink(data.zoom_link ?? "");
+      setRequest((prev) => (prev ? { ...prev, zoom_link: data.zoom_link ?? null } : null));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to create Zoom meeting.");
+    } finally {
+      setCreatingZoomMeeting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!request?.id) return;
+    if (!window.confirm("Delete this request? Any Zoom meeting for this appointment will be cancelled. This cannot be undone.")) return;
+    const secret = getStoredSecret();
+    if (!secret) return;
+    setDeleting(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/requests/${request.id}`, {
+        method: "DELETE",
+        headers: { "x-admin-secret": secret },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to delete.");
+      if (data.zoomCancelled === false) {
+        alert("Request deleted. The Zoom meeting could not be cancelled automatically — please cancel it in Zoom if needed.");
+      }
+      router.push("/admin");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to delete request.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +128,7 @@ export default function AdminRequestDetailPage() {
           "Content-Type": "application/json",
           "x-admin-secret": secret,
         },
-        body: JSON.stringify({ status, internal_notes: internalNotes }),
+        body: JSON.stringify({ status, internal_notes: internalNotes, zoom_link: zoomLink.trim() || null }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -189,6 +242,47 @@ export default function AdminRequestDetailPage() {
             <span className="text-stone-500 text-sm">Message</span>
             <p className="text-stone-900 dark:text-stone-100 mt-1 whitespace-pre-wrap">{request.message}</p>
           </div>
+          {(() => {
+            const contact = "preferred_contact" in request && request.preferred_contact
+              ? request.preferred_contact
+              : ("wants_appointment" in request && request.wants_appointment ? "zoom" : "email");
+            const contactLabel = contact === "zoom" ? "Virtual appointment (Zoom)" : contact === "instagram" ? "Instagram DM" : "Email";
+            return (
+              <div>
+                <span className="text-stone-500 text-sm">Follow-up</span>
+                <p className="text-stone-900 dark:text-stone-100">
+                  {contactLabel}
+                  {contact === "instagram" && "instagram_handle" in request && request.instagram_handle && (
+                    <span> — @{String(request.instagram_handle).replace(/^@/, "")}</span>
+                  )}
+                </p>
+              </div>
+            );
+          })()}
+          {"wants_appointment" in request && request.wants_appointment && (
+            <>
+              {"appointment_date" in request && request.appointment_date && "appointment_time_slot" in request && request.appointment_time_slot && (
+                <div>
+                  <span className="text-stone-500 text-sm">Scheduled slot</span>
+                  <p className="text-stone-900 dark:text-stone-100">
+                    {new Date(request.appointment_date + "T12:00:00Z").toLocaleDateString("en-US", {
+                      weekday: "short",
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                    , {getAppointmentSlotLabel(request.appointment_time_slot)}
+                  </p>
+                </div>
+              )}
+              {request.appointment_preference && (
+                <div>
+                  <span className="text-stone-500 text-sm">Additional note</span>
+                  <p className="text-stone-900 dark:text-stone-100">{request.appointment_preference}</p>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         <form onSubmit={handleSave} className="space-y-4">
@@ -223,6 +317,41 @@ export default function AdminRequestDetailPage() {
               placeholder="Notes for yourself on how you’re handling this request…"
             />
           </div>
+          {"wants_appointment" in request && request.wants_appointment && (
+            <div>
+              <label htmlFor="zoom_link" className="block text-sm text-stone-600 dark:text-stone-400 mb-1">
+                Zoom meeting link
+              </label>
+              <div className="flex flex-col gap-2">
+                <input
+                  id="zoom_link"
+                  type="url"
+                  value={zoomLink}
+                  onChange={(e) => setZoomLink(e.target.value)}
+                  className="w-full rounded-lg border border-stone-300 bg-white dark:border-stone-700 dark:bg-stone-900 px-4 py-2 text-stone-900 dark:text-stone-100 placeholder-stone-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  placeholder="https://zoom.us/j/..."
+                />
+                <div className="flex flex-wrap gap-2">
+                  {"appointment_date" in request &&
+                    request.appointment_date &&
+                    "appointment_time_slot" in request &&
+                    request.appointment_time_slot && (
+                      <button
+                        type="button"
+                        onClick={handleCreateZoomMeeting}
+                        disabled={creatingZoomMeeting || !!zoomLink.trim()}
+                        className="rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-700 disabled:opacity-50"
+                      >
+                        {creatingZoomMeeting ? "Creating…" : "Create Zoom meeting"}
+                      </button>
+                    )}
+                </div>
+              </div>
+              <p className="text-stone-500 text-xs mt-1">
+                Create a Zoom meeting (requires Zoom API in .env) or paste a link if you created one elsewhere.
+              </p>
+            </div>
+          )}
           <button
             type="submit"
             disabled={saving}
@@ -231,6 +360,21 @@ export default function AdminRequestDetailPage() {
             {saving ? "Saving…" : "Save"}
           </button>
         </form>
+
+        <div className="mt-12 pt-8 border-t border-stone-200 dark:border-stone-800">
+          <h2 className="text-lg font-medium text-stone-800 dark:text-stone-200 mb-2">Danger zone</h2>
+          <p className="text-stone-600 dark:text-stone-400 text-sm mb-3">
+            Deleting this request will also cancel the Zoom meeting (if one was created). This cannot be undone.
+          </p>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-medium px-4 py-2 text-sm"
+          >
+            {deleting ? "Deleting…" : "Delete request"}
+          </button>
+        </div>
       </main>
     </div>
   );

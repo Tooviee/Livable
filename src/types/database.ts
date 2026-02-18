@@ -24,6 +24,15 @@ export interface Database {
           status: RequestStatus;
           internal_notes: string | null;
           updated_at: string;
+          wants_appointment: boolean;
+          appointment_preference: string | null;
+          appointment_date: string | null;
+          appointment_time_slot: string | null;
+          zoom_link: string | null;
+          zoom_meeting_id: string | null;
+          preferred_contact: "zoom" | "email" | "instagram";
+          instagram_handle: string | null;
+          reschedule_token: string | null;
         };
         Insert: {
           id?: string;
@@ -37,6 +46,15 @@ export interface Database {
           status?: RequestStatus;
           internal_notes?: string | null;
           updated_at?: string;
+          wants_appointment?: boolean;
+          appointment_preference?: string | null;
+          appointment_date?: string | null;
+          appointment_time_slot?: string | null;
+          zoom_link?: string | null;
+          zoom_meeting_id?: string | null;
+          preferred_contact?: "zoom" | "email" | "instagram";
+          instagram_handle?: string | null;
+          reschedule_token?: string | null;
         };
         Update: {
           id?: string;
@@ -50,6 +68,15 @@ export interface Database {
           status?: RequestStatus;
           internal_notes?: string | null;
           updated_at?: string;
+          wants_appointment?: boolean;
+          appointment_preference?: string | null;
+          appointment_date?: string | null;
+          appointment_time_slot?: string | null;
+          zoom_link?: string | null;
+          zoom_meeting_id?: string | null;
+          preferred_contact?: "zoom" | "email" | "instagram";
+          instagram_handle?: string | null;
+          reschedule_token?: string | null;
         };
       };
     };

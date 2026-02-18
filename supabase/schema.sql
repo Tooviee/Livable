@@ -12,7 +12,16 @@ create table if not exists public.requests (
   category text not null,
   message text not null,
   status text not null default 'new' check (status in ('new', 'in_progress', 'resolved', 'closed')),
-  internal_notes text
+  internal_notes text,
+  wants_appointment boolean not null default false,
+  appointment_preference text,
+  appointment_date date,
+  appointment_time_slot text,
+  zoom_link text,
+  zoom_meeting_id text,
+  preferred_contact text not null default 'zoom' check (preferred_contact in ('zoom', 'email', 'instagram')),
+  instagram_handle text,
+  reschedule_token text unique
 );
 
 comment on table public.requests is 'Help requests from foreigners in Korea';
@@ -61,7 +70,45 @@ CREATE POLICY "service_role_all" ON public.requests
   USING (true)
   WITH CHECK (true);
 
--- 5) Verify: list policies for this table (run this to confirm)
+-- 5) Add virtual appointment columns (run if table already existed before this was added)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'requests' AND column_name = 'wants_appointment') THEN
+    ALTER TABLE public.requests ADD COLUMN wants_appointment boolean NOT NULL DEFAULT false;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'requests' AND column_name = 'appointment_preference') THEN
+    ALTER TABLE public.requests ADD COLUMN appointment_preference text;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'requests' AND column_name = 'zoom_link') THEN
+    ALTER TABLE public.requests ADD COLUMN zoom_link text;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'requests' AND column_name = 'appointment_date') THEN
+    ALTER TABLE public.requests ADD COLUMN appointment_date date;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'requests' AND column_name = 'appointment_time_slot') THEN
+    ALTER TABLE public.requests ADD COLUMN appointment_time_slot text;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'requests' AND column_name = 'preferred_contact') THEN
+    ALTER TABLE public.requests ADD COLUMN preferred_contact text NOT NULL DEFAULT 'zoom';
+    ALTER TABLE public.requests ADD CONSTRAINT requests_preferred_contact_check CHECK (preferred_contact IN ('zoom', 'email', 'instagram'));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'requests' AND column_name = 'instagram_handle') THEN
+    ALTER TABLE public.requests ADD COLUMN instagram_handle text;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'requests' AND column_name = 'reschedule_token') THEN
+    ALTER TABLE public.requests ADD COLUMN reschedule_token text UNIQUE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'requests' AND column_name = 'zoom_meeting_id') THEN
+    ALTER TABLE public.requests ADD COLUMN zoom_meeting_id text;
+  END IF;
+END$$;
+
+-- 5b) One Zoom slot per date+time: no two active requests (new/in_progress) can have the same appointment_date + appointment_time_slot
+DROP INDEX IF EXISTS public.requests_one_booking_per_slot;
+CREATE UNIQUE INDEX requests_one_booking_per_slot ON public.requests (appointment_date, appointment_time_slot)
+  WHERE wants_appointment = true AND status IN ('new', 'in_progress');
+
+-- 6) Verify: list policies for this table (run this to confirm)
 SELECT
   c.relname AS table_name,
   p.polname AS policy_name,

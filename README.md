@@ -56,6 +56,8 @@ Copy `.env.example` to `.env.local` and fill in Supabase keys, Brevo (or Outlook
 
 **Optional — Discord:** To get a notification in a Discord channel when someone submits a request, create a webhook (Server Settings → Integrations → Webhooks → New Webhook), copy the URL, and set `DISCORD_WEBHOOK_URL` in `.env.local`. The message includes name, email, phone (if provided), category, and description.
 
+**Optional — Zoom (auto-create meetings):** To generate a new Zoom meeting per request (with date/time from the user’s chosen slot), create a **Server-to-Server OAuth** app in the [Zoom Marketplace](https://marketplace.zoom.us/), add the scope `meeting:write:admin`, then set `ZOOM_ACCOUNT_ID`, `ZOOM_CLIENT_ID`, and `ZOOM_CLIENT_SECRET` in `.env.local`. In admin, use **Create Zoom meeting** to create the meeting and save the join link. Optionally set `ZOOM_USER_ID` (default `me`) and `APP_TIMEZONE` (default `Asia/Seoul`).
+
 ### 5. Run locally
 
 ```bash
@@ -75,10 +77,13 @@ You don’t need an admin account to submit a request. Submissions are anonymous
    Go to [http://localhost:3000/admin](http://localhost:3000/admin). Enter your `ADMIN_SECRET` and click **Load**. You’ll see all requests. Click a request to open its **detail page**: full message, contact info, and timestamps. There you can:
    - Change **Status** (New → In progress → Resolved / Closed)
    - Add **Internal notes** (only visible to you)
+   - **Delete request** (bottom of page): removes the request and cancels the Zoom meeting if one was created.
    - Click **Save** to store changes in the database.
 
 3. **Verify in Supabase (optional)**  
    In the Supabase dashboard, open **Table Editor** → `requests`. You’ll see the same rows; editing there also updates the data the app uses.
+
+**Optional — Cancel Zoom when deleting in Supabase:** If you delete a request row directly in the Supabase Table Editor, the Zoom meeting is not cancelled automatically unless you set up a **Database Webhook**. In Supabase: Database → Webhooks → Create a new hook → choose **DELETE** on table `public.requests`, set the URL to `https://your-domain.com/api/webhooks/supabase-request-deleted`, add a header `x-webhook-secret` with the value of `SUPABASE_WEBHOOK_SECRET` from your env. Then when a row is deleted (from the dashboard or SQL), Supabase will call your app and the Zoom meeting will be cancelled.
 
 ## Publish to the web
 
