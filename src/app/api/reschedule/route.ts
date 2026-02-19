@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendAppointmentChangedEmail } from "@/lib/email";
+import { notifyDiscordReschedule } from "@/lib/discord";
 import { isValidAppointmentSlot } from "@/lib/appointment-slots";
 import { LIMITS } from "@/lib/validation";
 
@@ -166,6 +167,16 @@ export async function POST(request: NextRequest) {
     appointmentDate: appointment_date,
     appointmentTimeSlot: appointment_time_slot,
   });
+
+  notifyDiscordReschedule({
+    requestId: row.id,
+    name: row.name,
+    email: row.email,
+    newDate: appointment_date,
+    newTimeSlot: appointment_time_slot,
+    oldDate: row.appointment_date ?? undefined,
+    oldTimeSlot: row.appointment_time_slot ?? undefined,
+  }).catch((err) => console.error("[Discord] Reschedule notification failed:", err));
 
   return NextResponse.json({ ok: true, message: "Your appointment has been changed. Check your email for confirmation." });
 }
