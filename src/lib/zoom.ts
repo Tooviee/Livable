@@ -7,8 +7,12 @@ const ZOOM_CLIENT_ID = process.env.ZOOM_CLIENT_ID;
 const ZOOM_CLIENT_SECRET = process.env.ZOOM_CLIENT_SECRET;
 
 export async function getZoomAccessToken(): Promise<string> {
-  if (!ZOOM_ACCOUNT_ID || !ZOOM_CLIENT_ID || !ZOOM_CLIENT_SECRET) {
-    throw new Error("Zoom credentials not configured.");
+  const missing: string[] = [];
+  if (!ZOOM_ACCOUNT_ID?.trim()) missing.push("ZOOM_ACCOUNT_ID");
+  if (!ZOOM_CLIENT_ID?.trim()) missing.push("ZOOM_CLIENT_ID");
+  if (!ZOOM_CLIENT_SECRET?.trim()) missing.push("ZOOM_CLIENT_SECRET");
+  if (missing.length > 0) {
+    throw new Error(`Zoom credentials not configured. Missing in env: ${missing.join(", ")}. Set them in Vercel → Project → Settings → Environment Variables for Production.`);
   }
   const res = await fetch("https://zoom.us/oauth/token", {
     method: "POST",
