@@ -14,14 +14,17 @@ export async function getZoomAccessToken(): Promise<string> {
   if (missing.length > 0) {
     throw new Error(`Zoom credentials not configured. Missing in env: ${missing.join(", ")}. Set them in Vercel → Project → Settings → Environment Variables for Production.`);
   }
+  const accountId = ZOOM_ACCOUNT_ID!.trim();
+  const clientId = ZOOM_CLIENT_ID!.trim();
+  const clientSecret = ZOOM_CLIENT_SECRET!.trim();
   const res = await fetch("https://zoom.us/oauth/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       grant_type: "account_credentials",
-      account_id: ZOOM_ACCOUNT_ID,
-      client_id: ZOOM_CLIENT_ID,
-      client_secret: ZOOM_CLIENT_SECRET,
+      account_id: accountId,
+      client_id: clientId,
+      client_secret: clientSecret,
     }),
   });
   if (!res.ok) {
