@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendZoomLinkEmail } from "@/lib/email";
+import { notifyDiscordZoomLinkChange } from "@/lib/discord";
 import { getZoomAccessToken } from "@/lib/zoom";
 import { isValidUuid } from "@/lib/validation";
 import { LIMITS } from "@/lib/validation";
@@ -213,6 +214,14 @@ export async function POST(
     meetingId,
     passcode,
   });
+
+  notifyDiscordZoomLinkChange({
+    requestId: id,
+    name: row.name,
+    email: row.email,
+    zoomLink: trimmedLink,
+    kind: "created",
+  }).catch((err) => console.error("[Discord] Zoom link notification failed:", err));
 
   return NextResponse.json({ ok: true, zoom_link: trimmedLink });
 }

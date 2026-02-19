@@ -121,3 +121,64 @@ export async function notifyDiscordNewRequest(payload: NewRequestPayload): Promi
     console.error("[Discord] Webhook error:", err);
   }
 }
+
+// ----- Zoom link created or updated (notify admin so they can follow up) -----
+
+export type ZoomLinkChangePayload = {
+  requestId: string;
+  name: string;
+  email: string;
+  zoomLink: string;
+  kind: "created" | "updated";
+};
+
+export async function notifyDiscordZoomLinkChange(payload: ZoomLinkChangePayload): Promise<void> {
+  const raw = process.env.DISCORD_WEBHOOK_URL;
+  const url = raw?.trim();
+  if (!url) {
+    console.warn("[Discord] DISCORD_WEBHOOK_URL not set — skipping Zoom link webhook");
+    return;
+  }
+  if (!is_valid_webhook_url(url)) {
+    console.warn("[Discord] DISCORD_WEBHOOK_URL invalid — skipping Zoom link webhook");
+    return;
+  }
+
+  const title = payload.kind === "created"
+    ? "Livable — Zoom meeting created"
+    : "Livable — Zoom link updated";
+  const content = payload.kind === "created"
+    ? "**Zoom meeting created** — confirmation email sent. You can send a follow-up if needed."
+    : "**Zoom link updated** — consider sending the new link to the user if they had an old one.";
+
+  const fields: { name: string; value: string; inline?: boolean }[] = [
+    { name: "Request ID", value: payload.requestId.slice(0, 8) + "…", inline: true },
+    { name: "Name", value: payload.name, inline: true },
+    { name: "Email", value: payload.email, inline: true },
+    { name: "Zoom link", value: truncate(payload.zoomLink, MAX_FIELD_VALUE), inline: false },
+  ];
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content,
+        embeds: [
+          {
+            title,
+            color: 0x378f79,
+            fields,
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      }),
+    });
+    const body = await res.text();
+    if (!res.ok) {
+      console.error("[Discord] Zoom link webhook failed:", res.status, body);
+    }
+  } catch (err) {
+    console.error("[Discord] Zoom link webhook error:", err);
+  }
+}

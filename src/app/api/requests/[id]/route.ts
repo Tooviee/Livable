@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { notifyDiscordZoomLinkChange } from "@/lib/discord";
 import { deleteZoomMeeting } from "@/lib/zoom";
 import { isValidUuid } from "@/lib/validation";
 import { LIMITS } from "@/lib/validation";
@@ -89,6 +90,17 @@ export async function PATCH(
     console.error("Supabase update error:", error);
     return NextResponse.json({ error: "Failed to update request." }, { status: 500 });
   }
+
+  if (updates.zoom_link !== undefined && updates.zoom_link && typeof data === "object" && data?.name && data?.email) {
+    notifyDiscordZoomLinkChange({
+      requestId: id,
+      name: (data as { name: string }).name,
+      email: (data as { email: string }).email,
+      zoomLink: updates.zoom_link,
+      kind: "updated",
+    }).catch((err) => console.error("[Discord] Zoom link notification failed:", err));
+  }
+
   return NextResponse.json(data);
 }
 
