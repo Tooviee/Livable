@@ -21,7 +21,8 @@ create table if not exists public.requests (
   zoom_meeting_id text,
   preferred_contact text not null default 'zoom' check (preferred_contact in ('zoom', 'email', 'instagram')),
   instagram_handle text,
-  reschedule_token text unique
+  reschedule_token text unique,
+  reminder_sent_at timestamptz
 );
 
 comment on table public.requests is 'Help requests from foreigners in Korea';
@@ -100,6 +101,9 @@ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'requests' AND column_name = 'zoom_meeting_id') THEN
     ALTER TABLE public.requests ADD COLUMN zoom_meeting_id text;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'requests' AND column_name = 'reminder_sent_at') THEN
+    ALTER TABLE public.requests ADD COLUMN reminder_sent_at timestamptz;
   END IF;
 END$$;
 

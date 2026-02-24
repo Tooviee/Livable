@@ -146,6 +146,7 @@ export async function POST(request: NextRequest) {
       appointment_time_slot: appointment_time_slot,
       zoom_link: null,
       zoom_meeting_id: null,
+      reminder_sent_at: null,
       updated_at: new Date().toISOString(),
     } as never)
     .eq("id", row.id);

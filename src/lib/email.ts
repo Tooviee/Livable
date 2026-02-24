@@ -322,3 +322,90 @@ export async function sendAppointmentChangedEmail(params: SendAppointmentChanged
     console.error("Appointment changed email not sent: Brevo/Outlook not configured.");
   }
 }
+
+// ----- Meeting reminder (30 minutes before Zoom) -----
+
+export type SendMeetingReminderParams = {
+  to: string;
+  name: string;
+  zoomLink: string;
+  appointmentDate: string;
+  appointmentTimeSlot: string;
+  rescheduleLink?: string;
+};
+
+function meetingReminderHtml(params: SendMeetingReminderParams): string {
+  const slotLabel = getAppointmentSlotLabel(params.appointmentTimeSlot);
+  const dateStr = formatAppointmentDate(params.appointmentDate);
+  const rescheduleLine = params.rescheduleLink
+    ? `<p>Need to change your appointment? <a href="${params.rescheduleLink}" style="color: #059669;">Use this link</a>.</p>`
+    : "";
+  return `
+  <p>Hi ${params.name},</p>
+  <p>This is a reminder: your Zoom appointment is in <strong>30 minutes</strong>.</p>
+  <p><strong>When:</strong> ${dateStr}, ${slotLabel}</p>
+  <p><strong>Join Zoom Meeting</strong><br><a href="${params.zoomLink}" style="color: #059669; font-weight: 600;">${params.zoomLink}</a></p>
+  ${rescheduleLine}
+  <p>— Livable</p>
+`;
+}
+
+async function sendMeetingReminderViaBrevo(params: SendMeetingReminderParams): Promise<boolean> {
+  const apiKey = process.env.BREVO_API_KEY;
+  const fromEmail = process.env.FROM_EMAIL;
+  const fromName = process.env.FROM_NAME || "Livable";
+  const replyTo = process.env.REPLY_TO_EMAIL || fromEmail;
+  if (!apiKey || !fromEmail) return false;
+  try {
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        "api-key": apiKey,
+      },
+      body: JSON.stringify({
+        sender: { name: fromName, email: fromEmail },
+        to: [{ email: params.to, name: params.name }],
+        replyTo: replyTo ? { email: replyTo } : undefined,
+        subject: "Livable — Reminder: Your Zoom meeting in 30 minutes",
+        htmlContent: meetingReminderHtml(params),
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function sendMeetingReminderViaOutlook(params: SendMeetingReminderParams): Promise<boolean> {
+  const user = process.env.OUTLOOK_USER;
+  const pass = process.env.OUTLOOK_APP_PASSWORD;
+  if (!user || !pass) return false;
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtp.office365.com",
+      port: 587,
+      secure: false,
+      auth: { user, pass },
+    });
+    await transporter.sendMail({
+      from: `Livable <${user}>`,
+      to: params.to,
+      replyTo: user,
+      subject: "Livable — Reminder: Your Zoom meeting in 30 minutes",
+      html: meetingReminderHtml(params),
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function sendMeetingReminderEmail(params: SendMeetingReminderParams): Promise<void> {
+  const sent =
+    (await sendMeetingReminderViaBrevo(params)) || (await sendMeetingReminderViaOutlook(params));
+  if (!sent) {
+    console.error("Meeting reminder email not sent: Brevo/Outlook not configured.");
+  }
+}

@@ -33,6 +33,7 @@ export interface Database {
           preferred_contact: "zoom" | "email" | "instagram";
           instagram_handle: string | null;
           reschedule_token: string | null;
+          reminder_sent_at: string | null;
         };
         Insert: {
           id?: string;
@@ -55,6 +56,7 @@ export interface Database {
           preferred_contact?: "zoom" | "email" | "instagram";
           instagram_handle?: string | null;
           reschedule_token?: string | null;
+          reminder_sent_at?: string | null;
         };
         Update: {
           id?: string;
@@ -77,6 +79,7 @@ export interface Database {
           preferred_contact?: "zoom" | "email" | "instagram";
           instagram_handle?: string | null;
           reschedule_token?: string | null;
+          reminder_sent_at?: string | null;
         };
       };
     };

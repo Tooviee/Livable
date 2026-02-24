@@ -58,6 +58,8 @@ Copy `.env.example` to `.env.local` and fill in Supabase keys, Brevo (or Outlook
 
 **Optional — Zoom (auto-create meetings):** To generate a new Zoom meeting per request (with date/time from the user’s chosen slot), create a **Server-to-Server OAuth** app in the [Zoom Marketplace](https://marketplace.zoom.us/), add the scope `meeting:write:admin`, then set `ZOOM_ACCOUNT_ID`, `ZOOM_CLIENT_ID`, and `ZOOM_CLIENT_SECRET` in `.env.local`. In admin, use **Create Zoom meeting** to create the meeting and save the join link. Optionally set `ZOOM_USER_ID` (default `me`) and `APP_TIMEZONE` (default `Asia/Seoul`).
 
+**Optional — Meeting reminder (30 min before Zoom):** The app can send an automated reminder email before each meeting. You need to add a DB column, set `CRON_SECRET` (and optionally `APP_TIMEZONE`), and schedule an external cron to call the endpoint every 10–15 minutes with a secret header. See **[docs/CRON-MEETING-REMINDERS.md](docs/CRON-MEETING-REMINDERS.md)** for step-by-step instructions (Supabase, env vars, cron-job.org, and Vercel).
+
 ### 5. Run locally
 
 ```bash
