@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { SocialLinks } from "@/components/SocialLinks";
+import { SOCIAL } from "@/lib/site";
 
 const ABOUT = {
   name: "Livable Team",
@@ -9,7 +11,6 @@ const ABOUT = {
   privacy:
     "Your information is only used to respond to your request. It is not shared with third parties or used for marketing. We use it solely to get in touch and help resolve the issue you submitted.",
   contactEmail: "liveabletogether@outlook.com",
-  instagramUrl: "https://www.instagram.com/livablekorea/", // Livable Instagram — leave empty to hide the link
 };
 
 export default function AboutPage() {
@@ -48,25 +49,20 @@ export default function AboutPage() {
               {ABOUT.privacy}
             </p>
           </div>
-          {ABOUT.instagramUrl ? (
-            <p className="text-sm">
-              <a
-                href={ABOUT.instagramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors"
-              >
-                Connect on Instagram →
-              </a>
-            </p>
-          ) : null}
         </div>
 
-        <p className="mt-10 text-stone-500 text-sm">
-          <Link href="/" className="text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200">
-            ← Back to home
-          </Link>
-        </p>
+        <div className="mt-6 flex items-center justify-between gap-4">
+          <p className="text-stone-500 text-sm">
+            <Link href="/" className="text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200">
+              ← Back to home
+            </Link>
+          </p>
+          {(SOCIAL.instagramUrl || SOCIAL.tiktokUrl) ? (
+            <div className="flex justify-end">
+              <SocialLinks />
+            </div>
+          ) : null}
+        </div>
       </main>
 
       <footer className="border-t border-stone-200 dark:border-stone-800 py-6 mt-12 px-4">

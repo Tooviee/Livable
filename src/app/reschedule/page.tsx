@@ -32,6 +32,7 @@ function RescheduleContent() {
   const [newDate, setNewDate] = useState("");
   const [newSlot, setNewSlot] = useState("");
   const [takenSlots, setTakenSlots] = useState<string[]>([]);
+  const [pastSlots, setPastSlots] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const minDate = useMemo(() => todayDateString(), []);
@@ -39,6 +40,7 @@ function RescheduleContent() {
   useEffect(() => {
     if (!newDate) {
       setTakenSlots([]);
+      setPastSlots([]);
       return;
     }
     const url = token
@@ -47,20 +49,30 @@ function RescheduleContent() {
     let cancelled = false;
     fetch(url)
       .then((r) => r.json())
-      .then((data: { taken?: string[] }) => {
-        if (!cancelled && Array.isArray(data.taken)) setTakenSlots(data.taken);
+      .then((data: { taken?: string[]; past?: string[] }) => {
+        if (cancelled) return;
+        if (Array.isArray(data.taken)) setTakenSlots(data.taken);
+        if (Array.isArray(data.past)) setPastSlots(data.past);
       })
       .catch(() => {
-        if (!cancelled) setTakenSlots([]);
+        if (!cancelled) {
+          setTakenSlots([]);
+          setPastSlots([]);
+        }
       });
     return () => {
       cancelled = true;
     };
   }, [newDate, token]);
 
+  const unavailableSlots = useMemo(
+    () => new Set([...takenSlots, ...pastSlots]),
+    [takenSlots, pastSlots]
+  );
+
   useEffect(() => {
-    if (takenSlots.length > 0 && newSlot && takenSlots.includes(newSlot)) setNewSlot("");
-  }, [takenSlots, newSlot]);
+    if (unavailableSlots.size > 0 && newSlot && unavailableSlots.has(newSlot)) setNewSlot("");
+  }, [unavailableSlots, newSlot]);
 
   useEffect(() => {
     if (!token?.trim()) {
@@ -230,8 +242,8 @@ function RescheduleContent() {
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {APPOINTMENT_TIME_SLOTS.map((slot) => {
-                const taken = takenSlots.includes(slot.value);
-                if (taken) {
+                const unavailable = unavailableSlots.has(slot.value);
+                if (unavailable) {
                   return (
                     <div
                       key={slot.value}
@@ -239,7 +251,6 @@ function RescheduleContent() {
                       aria-disabled="true"
                     >
                       <span className="text-sm text-stone-400 dark:text-stone-500">{slot.label}</span>
-                      <span className="text-xs text-stone-400 dark:text-stone-500">(unavailable)</span>
                     </div>
                   );
                 }

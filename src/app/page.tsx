@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SocialLinks } from "@/components/SocialLinks";
 
 export default function HomePage() {
   return (
@@ -63,8 +64,9 @@ export default function HomePage() {
       </main>
 
       <footer className="border-t border-stone-200 dark:border-stone-800 py-6">
-        <div className="max-w-3xl mx-auto px-4 text-center text-stone-500 text-sm">
-          Livable — Helping you settle in.
+        <div className="max-w-3xl mx-auto px-4 flex flex-col items-center gap-3 text-center text-stone-500 text-sm">
+          <SocialLinks />
+          <span>Livable — Helping you settle in.</span>
         </div>
       </footer>
     </div>

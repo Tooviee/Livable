@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { APPOINTMENT_TIME_SLOTS } from "@/lib/appointment-slots";
+import { buildIcsBlob, downloadIcs, livableEventStrings, getAppointmentSlotLabel } from "@/lib/calendar";
 
 const CATEGORIES = [
   { value: "housing", label: "Housing" },
@@ -42,38 +43,61 @@ function todayDateString(): string {
 
 type PreferredContact = "zoom" | "email" | "instagram";
 
+type ConfirmationData = {
+  name: string;
+  category: string;
+  message: string;
+  preferredContact: PreferredContact;
+  appointmentDate: string | null;
+  appointmentTimeSlot: string | null;
+  instagramHandle: string | null;
+};
+
 export default function RequestPage() {
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [confirmationData, setConfirmationData] = useState<ConfirmationData | null>(null);
   const [preferredContact, setPreferredContact] = useState<PreferredContact>("zoom");
   const [appointmentDate, setAppointmentDate] = useState("");
   const [appointmentTimeSlot, setAppointmentTimeSlot] = useState("");
   const [takenSlots, setTakenSlots] = useState<string[]>([]);
+  const [pastSlots, setPastSlots] = useState<string[]>([]);
   const [instagramHandle, setInstagramHandle] = useState("");
   const minDate = useMemo(() => todayDateString(), []);
 
   useEffect(() => {
     if (!appointmentDate) {
       setTakenSlots([]);
+      setPastSlots([]);
       return;
     }
     let cancelled = false;
     fetch(`/api/appointment-slots?date=${encodeURIComponent(appointmentDate)}`)
       .then((r) => r.json())
-      .then((data: { taken?: string[] }) => {
-        if (!cancelled && Array.isArray(data.taken)) setTakenSlots(data.taken);
+      .then((data: { taken?: string[]; past?: string[] }) => {
+        if (cancelled) return;
+        if (Array.isArray(data.taken)) setTakenSlots(data.taken);
+        if (Array.isArray(data.past)) setPastSlots(data.past);
       })
       .catch(() => {
-        if (!cancelled) setTakenSlots([]);
+        if (!cancelled) {
+          setTakenSlots([]);
+          setPastSlots([]);
+        }
       });
     return () => {
       cancelled = true;
     };
   }, [appointmentDate]);
 
+  const unavailableSlots = useMemo(
+    () => new Set([...takenSlots, ...pastSlots]),
+    [takenSlots, pastSlots]
+  );
+
   useEffect(() => {
-    if (takenSlots.includes(appointmentTimeSlot)) setAppointmentTimeSlot("");
-  }, [takenSlots, appointmentTimeSlot]);
+    if (unavailableSlots.has(appointmentTimeSlot)) setAppointmentTimeSlot("");
+  }, [unavailableSlots, appointmentTimeSlot]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -112,6 +136,15 @@ export default function RequestPage() {
     }
 
     setStatus("success");
+    setConfirmationData({
+      name: String(data.get("name") ?? ""),
+      category: String(data.get("category") ?? ""),
+      message: String(data.get("message") ?? ""),
+      preferredContact,
+      appointmentDate: preferredContact === "zoom" ? appointmentDate || null : null,
+      appointmentTimeSlot: preferredContact === "zoom" ? appointmentTimeSlot || null : null,
+      instagramHandle: preferredContact === "instagram" ? instagramHandle.trim() || null : null,
+    });
     form.reset();
     setPreferredContact("zoom");
     setAppointmentDate("");
@@ -119,8 +152,114 @@ export default function RequestPage() {
     setInstagramHandle("");
   }
 
+  function closeConfirmation() {
+    setConfirmationData(null);
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
+      {confirmationData && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/50 dark:bg-stone-950/70"
+          aria-modal="true"
+          role="dialog"
+          aria-labelledby="confirmation-title"
+        >
+          <div className="bg-white dark:bg-stone-900 rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto border border-stone-200 dark:border-stone-700">
+            <div className="p-6 space-y-5">
+              <h2 id="confirmation-title" className="text-xl font-semibold text-stone-900 dark:text-stone-100">
+                Request submitted
+              </h2>
+              <p className="text-stone-600 dark:text-stone-400 text-sm">
+                Check your email for confirmation and next steps. Summary of your request:
+              </p>
+              <dl className="space-y-2 text-sm">
+                <div>
+                  <dt className="text-stone-500 dark:text-stone-400">Name</dt>
+                  <dd className="text-stone-900 dark:text-stone-100 font-medium">{confirmationData.name}</dd>
+                </div>
+                <div>
+                  <dt className="text-stone-500 dark:text-stone-400">Category</dt>
+                  <dd className="text-stone-900 dark:text-stone-100">
+                    {CATEGORIES.find((c) => c.value === confirmationData.category)?.label ?? confirmationData.category}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-stone-500 dark:text-stone-400">Message</dt>
+                  <dd className="text-stone-700 dark:text-stone-300 whitespace-pre-wrap break-words">
+                    {confirmationData.message.length > 300
+                      ? confirmationData.message.slice(0, 300) + "…"
+                      : confirmationData.message}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-stone-500 dark:text-stone-400">Follow-up</dt>
+                  <dd className="text-stone-900 dark:text-stone-100">
+                    {confirmationData.preferredContact === "zoom" &&
+                    confirmationData.appointmentDate &&
+                    confirmationData.appointmentTimeSlot ? (
+                      <>
+                        Virtual appointment (Zoom) —{" "}
+                        {new Date(confirmationData.appointmentDate + "T12:00:00Z").toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                        , {getAppointmentSlotLabel(confirmationData.appointmentTimeSlot)}
+                      </>
+                    ) : confirmationData.preferredContact === "email" ? (
+                      "Email"
+                    ) : confirmationData.preferredContact === "instagram" ? (
+                      <>Instagram{confirmationData.instagramHandle ? ` (@${confirmationData.instagramHandle.replace(/^@/, "")})` : ""}</>
+                    ) : (
+                      ""
+                    )}
+                  </dd>
+                </div>
+              </dl>
+              {confirmationData.preferredContact === "zoom" &&
+                confirmationData.appointmentDate &&
+                confirmationData.appointmentTimeSlot && (() => {
+                  const slotLabel = getAppointmentSlotLabel(confirmationData.appointmentTimeSlot!);
+                  const catLabel = CATEGORIES.find((c) => c.value === confirmationData.category)?.label ?? confirmationData.category;
+                  const msgSnippet = confirmationData.message.slice(0, 200);
+                  const { title, description } = livableEventStrings(slotLabel, catLabel, msgSnippet);
+                  const addToCalendar = () => {
+                    const blob = buildIcsBlob(
+                      title,
+                      description,
+                      confirmationData.appointmentDate!,
+                      confirmationData.appointmentTimeSlot!
+                    );
+                    downloadIcs(blob);
+                  };
+                  return (
+                    <div className="pt-3 border-t border-stone-200 dark:border-stone-700">
+                      <button
+                        type="button"
+                        onClick={addToCalendar}
+                        className="w-full rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 px-4 py-2.5 text-sm font-medium text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-700/50 transition-colors"
+                      >
+                        Add to calendar
+                      </button>
+                      <p className="text-xs text-stone-500 dark:text-stone-400 mt-2">
+                        Opens a file you can add to any calendar app (Apple Calendar, Google Calendar, Outlook, Notion Calendar, etc.).
+                      </p>
+                    </div>
+                  );
+                })()}
+              <button
+                type="button"
+                onClick={closeConfirmation}
+                className="w-full rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-medium py-2.5 transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <header className="border-b border-stone-200 dark:border-stone-800">
         <div className="max-w-3xl mx-auto px-4 py-6 flex items-center justify-between">
           <Link href="/" className="text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">
@@ -276,7 +415,7 @@ export default function RequestPage() {
                   className="mt-1"
                 />
                 <span className="text-sm font-medium text-stone-700 dark:text-stone-300">
-                  Virtual appointment (Zoom) — pick a date and time
+                  Virtual appointment (Zoom)
                 </span>
               </label>
               <label
@@ -323,7 +462,7 @@ export default function RequestPage() {
                   className="mt-1"
                 />
                 <span className="text-sm font-medium text-stone-700 dark:text-stone-300">
-                  I prefer to communicate via Instagram direct messages
+                  I prefer to communicate via Instagram
                 </span>
               </label>
             </div>
@@ -350,8 +489,8 @@ export default function RequestPage() {
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {APPOINTMENT_TIME_SLOTS.map((slot) => {
-                      const taken = takenSlots.includes(slot.value);
-                      if (taken) {
+                      const unavailable = unavailableSlots.has(slot.value);
+                      if (unavailable) {
                         return (
                           <div
                             key={slot.value}
@@ -359,7 +498,6 @@ export default function RequestPage() {
                             aria-disabled="true"
                           >
                             <span className="text-sm text-stone-400 dark:text-stone-500">{slot.label}</span>
-                            <span className="text-xs text-stone-400 dark:text-stone-500">(unavailable)</span>
                           </div>
                         );
                       }
@@ -402,13 +540,14 @@ export default function RequestPage() {
             )}
             {preferredContact === "instagram" && (
               <div className="pl-6 border-l-2 border-emerald-200 dark:border-emerald-800 ml-1">
-                <label htmlFor="instagram_handle" className="block text-sm text-stone-600 dark:text-stone-400 mb-1">
-                  Your Instagram handle <span className="text-stone-500">(optional)</span>
+                <label htmlFor="instagram_handle" className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
+                  Your Instagram handle <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="instagram_handle"
                   name="instagram_handle"
                   type="text"
+                  required
                   value={instagramHandle}
                   onChange={(e) => setInstagramHandle(e.target.value)}
                   className="w-full rounded-lg border border-stone-300 bg-white dark:border-stone-700 dark:bg-stone-900 px-4 py-2 text-stone-900 dark:text-stone-100 placeholder-stone-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-sm"
@@ -422,7 +561,8 @@ export default function RequestPage() {
             type="submit"
             disabled={
               status === "sending" ||
-              (preferredContact === "zoom" && (!appointmentDate || !appointmentTimeSlot))
+              (preferredContact === "zoom" && (!appointmentDate || !appointmentTimeSlot)) ||
+              (preferredContact === "instagram" && !instagramHandle.trim())
             }
             className="w-full rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:bg-stone-400 dark:disabled:bg-stone-600 disabled:cursor-not-allowed text-white font-medium py-3 transition-colors"
           >

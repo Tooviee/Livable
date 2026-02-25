@@ -89,6 +89,11 @@ export function validateLengths(
   if (parsed.appointment_preference && parsed.appointment_preference.length > LIMITS.appointment_preference) {
     return { ok: false, error: `Preferred time must be ${LIMITS.appointment_preference} characters or less.` };
   }
+  if (parsed.preferred_contact === "instagram") {
+    if (!parsed.instagram_handle || !parsed.instagram_handle.trim()) {
+      return { ok: false, error: "Please enter your Instagram handle so we can reach you via DM." };
+    }
+  }
   if (parsed.instagram_handle && parsed.instagram_handle.length > LIMITS.instagram_handle) {
     return { ok: false, error: `Instagram handle must be ${LIMITS.instagram_handle} characters or less.` };
   }

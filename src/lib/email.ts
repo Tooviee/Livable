@@ -48,12 +48,16 @@ const confirmationHtml = (params: SendConfirmationParams) => {
     const handleLine = params.instagramHandle
       ? `<p><strong>Your Instagram:</strong> @${params.instagramHandle.replace(/^@/, "")}</p>`
       : "";
-    followUpBlock = `<p>We'll follow up via Instagram direct messages.</p>${handleLine}`;
+    const replyEmail = process.env.REPLY_TO_EMAIL || process.env.FROM_EMAIL;
+    const contactBackLine = replyEmail
+      ? `<p>Our team is on the way to review your request. If you have not received a message within an hour, please contact us at <a href="mailto:${replyEmail}" style="color: #059669;">${replyEmail}</a>.</p>`
+      : "<p>Our team is on the way to review your request. If you have not received a message within an hour, please reply to this email to contact us.</p>";
+    followUpBlock = `<p>We'll follow up via Instagram direct messages.</p>${handleLine}${contactBackLine}`;
   }
   return `
   <p>Hi ${params.name},</p>
   <p>We've received your request and will get back to you with next steps.</p>
-  <p><strong>Request reference:</strong> ${params.requestId.slice(0, 8)}…</p>
+  <p><strong>Request reference:</strong> ${params.requestId.slice(0, 8)}</p>
   <p><strong>Submitted:</strong> ${params.requestDate}</p>${followUpBlock}
   <p>If you have any urgent follow-up, you can reply to this email.</p>
   <p>— Livable</p>
@@ -78,7 +82,7 @@ async function sendViaBrevo(params: SendConfirmationParams): Promise<boolean> {
         sender: { name: fromName, email: fromEmail },
         to: [{ email: params.to, name: params.name }],
         replyTo: replyTo ? { email: replyTo } : undefined,
-        subject: `Livable — We received your request (${params.requestId.slice(0, 8)})`,
+        subject: "Livable — We received your request",
         htmlContent: confirmationHtml(params),
       }),
     });
@@ -109,7 +113,7 @@ async function sendViaOutlook(params: SendConfirmationParams): Promise<boolean> 
       from: `Livable <${user}>`,
       to: params.to,
       replyTo: user,
-      subject: `Livable — We received your request (${params.requestId.slice(0, 8)})`,
+      subject: "Livable — We received your request",
       html: confirmationHtml(params),
     });
     return true;
