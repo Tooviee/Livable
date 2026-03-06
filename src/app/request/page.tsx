@@ -467,7 +467,7 @@ export default function RequestPage() {
               </label>
             </div>
             {preferredContact === "zoom" && (
-              <div className="pl-6 space-y-4 border-l-2 border-emerald-200 dark:border-emerald-800 ml-1">
+              <div className="min-w-0 pl-6 space-y-4 border-l-2 border-emerald-200 dark:border-emerald-800 ml-1">
                 <div>
                   <label htmlFor="appointment_date" className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">
                     Date
@@ -480,7 +480,7 @@ export default function RequestPage() {
                     min={minDate}
                     value={appointmentDate}
                     onChange={(e) => setAppointmentDate(e.target.value)}
-                    className="w-full rounded-lg border border-stone-300 bg-white dark:border-stone-700 dark:bg-stone-900 px-4 py-2.5 text-stone-900 dark:text-stone-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    className="w-full min-w-0 max-w-full rounded-lg border border-stone-300 bg-white dark:border-stone-700 dark:bg-stone-900 px-4 py-2.5 text-stone-900 dark:text-stone-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 box-border"
                   />
                 </div>
                 <div>
