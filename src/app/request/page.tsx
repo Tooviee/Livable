@@ -488,42 +488,48 @@ export default function RequestPage() {
                   <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
                     Time slot
                   </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {APPOINTMENT_TIME_SLOTS.map((slot) => {
-                      const unavailable = unavailableSlots.has(slot.value);
-                      if (unavailable) {
+                  {!appointmentDate ? (
+                    <p className="text-sm text-stone-500 dark:text-stone-400 rounded-lg border border-dashed border-stone-300 dark:border-stone-600 px-4 py-3 bg-stone-50 dark:bg-stone-800/30">
+                      Please select the date.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {APPOINTMENT_TIME_SLOTS.map((slot) => {
+                        const unavailable = unavailableSlots.has(slot.value);
+                        if (unavailable) {
+                          return (
+                            <div
+                              key={slot.value}
+                              className="flex items-center gap-2 rounded-lg border border-stone-200 dark:border-stone-700 px-4 py-2.5 cursor-not-allowed bg-stone-100 dark:bg-stone-800/50"
+                              aria-disabled="true"
+                            >
+                              <span className="text-sm text-stone-400 dark:text-stone-500">{slot.label}</span>
+                            </div>
+                          );
+                        }
                         return (
-                          <div
+                          <label
                             key={slot.value}
-                            className="flex items-center gap-2 rounded-lg border border-stone-200 dark:border-stone-700 px-4 py-2.5 cursor-not-allowed bg-stone-100 dark:bg-stone-800/50"
-                            aria-disabled="true"
+                            className={`flex items-center gap-2 rounded-lg border px-4 py-2.5 cursor-pointer transition-colors ${
+                              appointmentTimeSlot === slot.value
+                                ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 dark:border-emerald-500/50"
+                                : "border-stone-300 dark:border-stone-600 hover:border-stone-400 dark:hover:border-stone-500"
+                            }`}
                           >
-                            <span className="text-sm text-stone-400 dark:text-stone-500">{slot.label}</span>
-                          </div>
+                            <input
+                              type="radio"
+                              name="appointment_time_slot"
+                              value={slot.value}
+                              checked={appointmentTimeSlot === slot.value}
+                              onChange={() => setAppointmentTimeSlot(slot.value)}
+                              className="sr-only"
+                            />
+                            <span className="text-sm text-stone-900 dark:text-stone-100">{slot.label}</span>
+                          </label>
                         );
-                      }
-                      return (
-                        <label
-                          key={slot.value}
-                          className={`flex items-center gap-2 rounded-lg border px-4 py-2.5 cursor-pointer transition-colors ${
-                            appointmentTimeSlot === slot.value
-                              ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 dark:border-emerald-500/50"
-                              : "border-stone-300 dark:border-stone-600 hover:border-stone-400 dark:hover:border-stone-500"
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="appointment_time_slot"
-                            value={slot.value}
-                            checked={appointmentTimeSlot === slot.value}
-                            onChange={() => setAppointmentTimeSlot(slot.value)}
-                            className="sr-only"
-                          />
-                          <span className="text-sm text-stone-900 dark:text-stone-100">{slot.label}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
+                      })}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="appointment_preference" className="block text-sm text-stone-600 dark:text-stone-400 mb-1">
