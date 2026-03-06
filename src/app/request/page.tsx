@@ -468,7 +468,7 @@ export default function RequestPage() {
             </div>
             {preferredContact === "zoom" && (
               <div className="min-w-0 pl-6 space-y-4 border-l-2 border-emerald-200 dark:border-emerald-800 ml-1">
-                <div>
+                <div className="min-w-0 overflow-hidden w-3/4 max-w-[240px]">
                   <label htmlFor="appointment_date" className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">
                     Date
                   </label>
