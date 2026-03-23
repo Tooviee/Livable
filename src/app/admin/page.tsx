@@ -19,6 +19,8 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [secret, setSecret] = useState("");
   const [secretInput, setSecretInput] = useState("");
+  const [testingDiscord, setTestingDiscord] = useState(false);
+  const [discordTestMessage, setDiscordTestMessage] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -62,6 +64,27 @@ export default function AdminPage() {
     if (value) setSecret(value);
   };
 
+  const handleDiscordTest = async () => {
+    if (!secret || testingDiscord) return;
+    setTestingDiscord(true);
+    setDiscordTestMessage("");
+    try {
+      const res = await fetch("/api/admin/discord-test", {
+        method: "POST",
+        headers: { "x-admin-secret": secret },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Discord test failed.");
+      }
+      setDiscordTestMessage("Discord test sent. Check your Discord channel.");
+    } catch (e) {
+      setDiscordTestMessage(e instanceof Error ? e.message : "Discord test failed.");
+    } finally {
+      setTestingDiscord(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-stone-200 dark:border-stone-800">
@@ -100,6 +123,19 @@ export default function AdminPage() {
           </form>
         ) : (
           <>
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleDiscordTest}
+                disabled={testingDiscord}
+                className="rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 disabled:opacity-50"
+              >
+                {testingDiscord ? "Testing Discord…" : "Test Discord"}
+              </button>
+              {discordTestMessage ? (
+                <span className="text-sm text-stone-600 dark:text-stone-400">{discordTestMessage}</span>
+              ) : null}
+            </div>
             {error && (
               <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 dark:bg-red-500/10 dark:border-red-500/30 text-red-700 dark:text-red-300 text-sm">
                 {error}

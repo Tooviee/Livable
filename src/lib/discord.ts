@@ -35,6 +35,48 @@ function is_valid_webhook_url(url: string): boolean {
   return VALID_WEBHOOK_PREFIXES.some((p) => u.startsWith(p));
 }
 
+export async function sendDiscordTestMessage(): Promise<{ ok: boolean; error?: string }> {
+  const raw = process.env.DISCORD_WEBHOOK_URL;
+  const url = raw?.trim();
+  if (!url) {
+    return { ok: false, error: "DISCORD_WEBHOOK_URL is not set." };
+  }
+  if (!is_valid_webhook_url(url)) {
+    return {
+      ok: false,
+      error:
+        "DISCORD_WEBHOOK_URL is invalid. It must start with https://discord.com/api/webhooks/.",
+    };
+  }
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content: "**Discord test** from Livable admin",
+        embeds: [
+          {
+            title: "Livable — Discord webhook test",
+            color: 0x378f79,
+            description: "If you can see this message, Discord notifications are working.",
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      }),
+    });
+    const body = await res.text();
+    if (!res.ok) {
+      return { ok: false, error: `Discord returned ${res.status}: ${body || "request failed"}` };
+    }
+    return { ok: true };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Unknown Discord webhook error.",
+    };
+  }
+}
+
 export async function notifyDiscordNewRequest(payload: NewRequestPayload): Promise<void> {
   const raw = process.env.DISCORD_WEBHOOK_URL;
   const url = raw?.trim();
