@@ -32,6 +32,8 @@ export default function AdminRequestDetailPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [creatingZoomMeeting, setCreatingZoomMeeting] = useState(false);
+  const [retryingDiscord, setRetryingDiscord] = useState(false);
+  const [discordActionMessage, setDiscordActionMessage] = useState("");
   const [deleting, setDeleting] = useState(false);
   const router = useRouter();
 
@@ -110,6 +112,35 @@ export default function AdminRequestDetailPage() {
       setError(e instanceof Error ? e.message : "Failed to delete request.");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleRetryDiscord = async () => {
+    if (!request?.id || retryingDiscord) return;
+    const secret = getStoredSecret();
+    if (!secret) return;
+    setRetryingDiscord(true);
+    setDiscordActionMessage("");
+    setError("");
+    try {
+      const res = await fetch(`/api/requests/${request.id}/retry-discord`, {
+        method: "POST",
+        headers: { "x-admin-secret": secret },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to retry Discord notification.");
+      setRequest((prev) =>
+        prev
+          ? { ...prev, discord_notified_at: new Date().toISOString(), discord_notify_error: null }
+          : prev
+      );
+      setDiscordActionMessage("Discord notification sent.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to retry Discord notification.";
+      setRequest((prev) => (prev ? { ...prev, discord_notified_at: null, discord_notify_error: msg } : prev));
+      setDiscordActionMessage(msg);
+    } finally {
+      setRetryingDiscord(false);
     }
   };
 
@@ -259,6 +290,34 @@ export default function AdminRequestDetailPage() {
               </div>
             );
           })()}
+          <div>
+            <span className="text-stone-500 text-sm">Discord notification</span>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              {"discord_notified_at" in request && request.discord_notified_at ? (
+                <span className="text-emerald-700 dark:text-emerald-400 text-sm">
+                  Sent {new Date(request.discord_notified_at).toLocaleString()}
+                </span>
+              ) : (
+                <span className="text-amber-700 dark:text-amber-300 text-sm">Not sent or failed</span>
+              )}
+              <button
+                type="button"
+                onClick={handleRetryDiscord}
+                disabled={retryingDiscord}
+                className="rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 px-3 py-1.5 text-xs text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-700 disabled:opacity-50"
+              >
+                {retryingDiscord ? "Retrying…" : "Retry Discord notification"}
+              </button>
+            </div>
+            {"discord_notify_error" in request && request.discord_notify_error ? (
+              <p className="text-red-700 dark:text-red-300 text-xs mt-1 break-words">
+                Last error: {request.discord_notify_error}
+              </p>
+            ) : null}
+            {discordActionMessage ? (
+              <p className="text-stone-500 dark:text-stone-400 text-xs mt-1">{discordActionMessage}</p>
+            ) : null}
+          </div>
           {"wants_appointment" in request && request.wants_appointment && (
             <>
               {"appointment_date" in request && request.appointment_date && "appointment_time_slot" in request && request.appointment_time_slot && (

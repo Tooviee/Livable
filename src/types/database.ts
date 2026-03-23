@@ -34,6 +34,8 @@ export interface Database {
           instagram_handle: string | null;
           reschedule_token: string | null;
           reminder_sent_at: string | null;
+          discord_notified_at: string | null;
+          discord_notify_error: string | null;
         };
         Insert: {
           id?: string;
@@ -57,6 +59,8 @@ export interface Database {
           instagram_handle?: string | null;
           reschedule_token?: string | null;
           reminder_sent_at?: string | null;
+          discord_notified_at?: string | null;
+          discord_notify_error?: string | null;
         };
         Update: {
           id?: string;
@@ -80,6 +84,8 @@ export interface Database {
           instagram_handle?: string | null;
           reschedule_token?: string | null;
           reminder_sent_at?: string | null;
+          discord_notified_at?: string | null;
+          discord_notify_error?: string | null;
         };
       };
     };

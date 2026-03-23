@@ -18,6 +18,8 @@ export type NewRequestPayload = {
   instagramHandle?: string;
 };
 
+export type DiscordNotifyResult = { ok: true } | { ok: false; error: string };
+
 const MAX_FIELD_VALUE = 1024;
 
 function truncate(str: string, max: number): string {
@@ -77,16 +79,20 @@ export async function sendDiscordTestMessage(): Promise<{ ok: boolean; error?: s
   }
 }
 
-export async function notifyDiscordNewRequest(payload: NewRequestPayload): Promise<void> {
+export async function notifyDiscordNewRequest(payload: NewRequestPayload): Promise<DiscordNotifyResult> {
   const raw = process.env.DISCORD_WEBHOOK_URL;
   const url = raw?.trim();
   if (!url) {
     console.warn("[Discord] DISCORD_WEBHOOK_URL not set — skipping webhook");
-    return;
+    return { ok: false, error: "DISCORD_WEBHOOK_URL not set." };
   }
   if (!is_valid_webhook_url(url)) {
     console.warn("[Discord] DISCORD_WEBHOOK_URL invalid (must start with https://discord.com/api/webhooks/ or https://discordapp.com/api/webhooks/) — skipping");
-    return;
+    return {
+      ok: false,
+      error:
+        "DISCORD_WEBHOOK_URL invalid (must start with https://discord.com/api/webhooks/ or https://discordapp.com/api/webhooks/).",
+    };
   }
 
   const fields: { name: string; value: string; inline?: boolean }[] = [
@@ -154,13 +160,15 @@ export async function notifyDiscordNewRequest(payload: NewRequestPayload): Promi
     const body = await res.text();
     if (!res.ok) {
       console.error("[Discord] Webhook failed:", res.status, body);
-      return;
+      return { ok: false, error: `Discord webhook failed (${res.status}): ${body || "request failed"}` };
     }
     if (process.env.NODE_ENV === "development") {
       console.log("[Discord] Webhook sent successfully");
     }
+    return { ok: true };
   } catch (err) {
     console.error("[Discord] Webhook error:", err);
+    return { ok: false, error: err instanceof Error ? err.message : "Unknown Discord webhook error." };
   }
 }
 

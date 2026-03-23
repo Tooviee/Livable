@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
     rescheduleLink,
   });
 
-  notifyDiscordNewRequest({
+  const discordResult = await notifyDiscordNewRequest({
     name: data.name,
     email: data.email,
     phone: data.phone,
@@ -220,9 +220,18 @@ export async function POST(request: NextRequest) {
     appointmentTimeSlot: data.appointment_time_slot ?? undefined,
     preferredContact: data.preferred_contact,
     instagramHandle: data.instagram_handle ?? undefined,
-  }).catch((err) => {
-    console.error("[Discord] Notification failed:", err);
   });
+
+  const discordStatusUpdate = discordResult.ok
+    ? { discord_notified_at: new Date().toISOString(), discord_notify_error: null, updated_at: new Date().toISOString() }
+    : {
+        discord_notified_at: null,
+        discord_notify_error: (discordResult.error || "Discord notification failed.").slice(0, LIMITS.internal_notes),
+        updated_at: new Date().toISOString(),
+      };
+  await (supabaseAdmin
+    ? supabaseAdmin.from("requests").update(discordStatusUpdate as never).eq("id", requestId)
+    : supabase.from("requests").update(discordStatusUpdate as never).eq("id", requestId));
 
   return NextResponse.json({ id: requestId, ok: true });
 }
